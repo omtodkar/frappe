@@ -1,0 +1,9 @@
+failure-threshold: warning
+ignored:
+  # Pinning every apt package version across a moving Debian point release
+  # would break the build on each security update; the base image is digest
+  # pinned instead.
+  - DL3008
+  # The FROM instruction expands a digest-pinned ARG, which the action's
+  # Hadolint version cannot resolve to a tag.
+  - DL3006
