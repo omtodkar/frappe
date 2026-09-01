@@ -53,6 +53,18 @@ echo "--- assets baked into the image layer ---"
 	&& echo "PASS  entrypoint linked sites/assets" \
 	|| { echo "FAIL  sites/assets is not a symlink"; fail=1; }
 
+echo "--- sites skeleton is recoverable from outside the mount point ---"
+# A Kubernetes PVC mounts empty over sites/ and hides these; the entrypoint
+# restores them from the seed. Without the seed, bench dies with
+# "./apps.txt Not Found" before doing anything.
+for f in apps.txt apps.json common_site_config.json; do
+	if [ -f "/home/frappe/frappe-bench/sites-seed/$f" ]; then
+		echo "PASS  sites-seed/$f present"
+	else
+		echo "FAIL  sites-seed/$f missing"; fail=1
+	fi
+done
+
 echo "--- socketio entry point ---"
 [ -f apps/frappe/socketio.js ] && echo "PASS  socketio.js present" || { echo "FAIL  socketio.js missing"; fail=1; }
 

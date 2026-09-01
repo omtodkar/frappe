@@ -161,6 +161,10 @@ WORKDIR /home/frappe/frappe-bench
 # them.
 RUN cp -r /home/frappe/frappe-bench/sites/assets /home/frappe/frappe-bench/assets \
     && rm -rf /home/frappe/frappe-bench/sites/assets \
+    # A pristine copy of the sites skeleton OUTSIDE the mount point. A
+    # Kubernetes PVC mounts empty over sites/ and hides apps.txt, which makes
+    # bench unusable; the entrypoint restores it from here.
+    && cp -a /home/frappe/frappe-bench/sites /home/frappe/frappe-bench/sites-seed \
     # The "Frappe-only" guarantee, asserted rather than assumed.
     && apps="$(tr -d '\r' < sites/apps.txt | grep -c . || true)" \
     && if [ "${apps}" != "1" ] || ! grep -qx 'frappe' sites/apps.txt; then \
