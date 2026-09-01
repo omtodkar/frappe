@@ -55,6 +55,10 @@ RUN useradd -ms /bin/bash frappe \
     # PostgreSQL client + libpq (this image is the PostgreSQL lane's runtime)
     libpq-dev \
     postgresql-client \
+    # Frappe's pyproject depends on mysqlclient UNCONDITIONALLY, so the
+    # MariaDB client library is required even though this lane speaks only
+    # PostgreSQL. Runtime shared object here; headers in the build stage.
+    libmariadb3 \
     # Node via nvm
     && mkdir -p ${NVM_DIR} \
     && curl -fsSL "https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_VERSION}/install.sh" | bash \
@@ -105,6 +109,7 @@ RUN apt-get update \
     libffi-dev \
     liblcms2-dev \
     libldap2-dev \
+    libmariadb-dev \
     libsasl2-dev \
     libtiff5-dev \
     libwebp-dev \
