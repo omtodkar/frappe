@@ -140,6 +140,11 @@ RUN got="$(git -C apps/frappe rev-parse HEAD)" \
 
 FROM base AS frappe
 
+# Repeated rather than inherited: hadolint evaluates SHELL per stage, and this
+# stage pipes. ENTRYPOINT/CMD below are exec form, so this has no runtime
+# effect.
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
 USER frappe
 
 COPY --from=build --chown=frappe:frappe /home/frappe/frappe-bench /home/frappe/frappe-bench
