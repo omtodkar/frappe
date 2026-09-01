@@ -7,3 +7,6 @@ ignored:
   # The FROM instruction expands a digest-pinned ARG, which the action's
   # Hadolint version cannot resolve to a tag.
   - DL3006
+  # nvm.sh is created by the same RUN that sources it, so it cannot exist at
+  # lint time.
+  - SC1091

@@ -19,6 +19,7 @@ FROM ${PYTHON_BASE} AS base
 
 ARG NODE_VERSION=24
 ARG NVM_VERSION=v0.40.6
+ARG YARN_VERSION=1.22.22
 ARG WKHTMLTOPDF_VERSION=0.12.6.1-3
 ARG WKHTMLTOPDF_DISTRO=bookworm
 ARG BENCH_VERSION=5.31.0
@@ -27,6 +28,11 @@ ENV NVM_DIR=/home/frappe/.nvm
 ENV NVM_SYMLINK_CURRENT=true
 ENV PATH=${NVM_DIR}/current/bin/:${PATH}
 ENV PYTHONUNBUFFERED=1
+
+# bash with pipefail, so a failed curl piped into bash (the nvm install) fails
+# the build instead of silently producing an image with no Node. Inherited by
+# every stage built FROM this one.
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # hadolint ignore=DL3008
 RUN useradd -ms /bin/bash frappe \
@@ -55,7 +61,7 @@ RUN useradd -ms /bin/bash frappe \
     && . ${NVM_DIR}/nvm.sh \
     && nvm install ${NODE_VERSION} \
     && nvm use ${NODE_VERSION} \
-    && npm install -g yarn \
+    && npm install -g "yarn@${YARN_VERSION}" \
     && nvm alias default ${NODE_VERSION} \
     && rm -rf ${NVM_DIR}/.cache \
     # wkhtmltopdf with patched Qt — Frappe's DEFAULT pdf_generator.
@@ -118,10 +124,13 @@ RUN bench init \
     --no-backups \
     --skip-redis-config-generation \
     --verbose \
-    /home/frappe/frappe-bench \
-    && cd /home/frappe/frappe-bench \
-    # Assert we built the commit we intended, before the .git dirs are removed.
-    && got="$(git -C apps/frappe rev-parse HEAD)" \
+    /home/frappe/frappe-bench
+
+WORKDIR /home/frappe/frappe-bench
+
+# Assert we built the commit we intended, while the .git directory that proves
+# it still exists -- this is the only moment the evidence is available.
+RUN got="$(git -C apps/frappe rev-parse HEAD)" \
     && if [ "${got}" != "${FRAPPE_COMMIT}" ]; then \
     echo "FATAL: frappe HEAD ${got} != expected ${FRAPPE_COMMIT}" >&2; exit 1; \
     fi \
